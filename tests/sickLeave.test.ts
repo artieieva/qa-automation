@@ -36,4 +36,8 @@ describe('calcSickLeave - TDD', () => {
   ])('розраховує 100% за дні з 11 по 30: $days дн. -> $expected грн', ({ days, expected }) => {
     expect(calcSickLeave(days, 1000)).toBe(expected);
   });
+  it('заокруглює підсумкову суму виплати до 2 знаків після коми', () => {
+    // 3 дні * 333.33 грн/день * 0.6 = 599.994 грн -> має бути 599.99 грн
+    expect(calcSickLeave(3, 333.33)).toBe(599.99);
+  });
 });
