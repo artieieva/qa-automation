@@ -8,6 +8,8 @@ const STAGE2_RATE = 0.8;
 
 const STAGE3_RATE = 1.0;
 
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
 export function calcSickLeave(days: number, dailySalary: number): number {
   if (!Number.isInteger(days) || days < 0) {
     throw new Error('INVALID_DAYS');
@@ -20,18 +22,18 @@ export function calcSickLeave(days: number, dailySalary: number): number {
   }
 
   if (days <= STAGE1_MAX_DAYS) {
-    return days * dailySalary * STAGE1_RATE;
+    return round2(days * dailySalary * STAGE1_RATE);
   }
 
   if (days <= STAGE2_MAX_DAYS) {
     const stage1Pay = STAGE1_MAX_DAYS * dailySalary * STAGE1_RATE;
     const stage2Pay = (days - STAGE1_MAX_DAYS) * dailySalary * STAGE2_RATE;
-    return stage1Pay + stage2Pay;
+    return round2(stage1Pay + stage2Pay);
   }
 
   const stage1Pay = STAGE1_MAX_DAYS * dailySalary * STAGE1_RATE;
   const stage2Pay = (STAGE2_MAX_DAYS - STAGE1_MAX_DAYS) * dailySalary * STAGE2_RATE;
   const stage3Pay = (days - STAGE2_MAX_DAYS) * dailySalary * STAGE3_RATE;
 
-  return stage1Pay + stage2Pay + stage3Pay;
+  return round2(stage1Pay + stage2Pay + stage3Pay);
 }
