@@ -15,4 +15,13 @@ describe('calcSickLeave - TDD', () => {
   it('відхиляє тривалість лікарняного понад 30 днів (межа 31)', () => {
     expect(() => calcSickLeave(31, 1000)).toThrow('EXCEEDS_MAX_DAYS');
   });
+
+  // Цикл 3: Розбіг від 0 до 5 днів (ставка 60%)
+  it.each([
+    { days: 0, expected: 0 },
+    { days: 1, expected: 600 },
+    { days: 5, expected: 3000 },
+  ])('розраховує 60% за перші 5 днів: $days дн. -> $expected грн', ({ days, expected }) => {
+    expect(calcSickLeave(days, 1000)).toBe(expected);
+  });
 });
