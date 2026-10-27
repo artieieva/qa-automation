@@ -24,4 +24,10 @@ describe('calcSickLeave - TDD', () => {
   ])('розраховує 60% за перші 5 днів: $days дн. -> $expected грн', ({ days, expected }) => {
     expect(calcSickLeave(days, 1000)).toBe(expected);
   });
+  it.each([
+    { days: 6, expected: 3800 },
+    { days: 10, expected: 7000 },
+  ])('розраховує 80% за дні з 6 по 10: $days дн. -> $expected грн', ({ days, expected }) => {
+    expect(calcSickLeave(days, 1000)).toBe(expected);
+  });
 });
