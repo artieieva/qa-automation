@@ -9,7 +9,6 @@ describe('ReminderService', () => {
   let mailer: Mailer;
   let service: ReminderService;
 
-  // Базова дата створення замовлення: 1 березня 2026 року
   const ORDER_CREATED_AT = '2026-03-01T10:00:00.000Z';
 
   beforeEach(() => {
@@ -21,8 +20,8 @@ describe('ReminderService', () => {
       }),
     };
 
-    reminderRepo = new InMemoryReminderRepository(); // Підробка зі станом
-    mailer = { send: vi.fn().mockResolvedValue(undefined) }; // Шпигун
+    reminderRepo = new InMemoryReminderRepository();
+    mailer = { send: vi.fn().mockResolvedValue(undefined) };
 
     service = new ReminderService(orderProvider, reminderRepo, mailer);
   });
@@ -37,18 +36,16 @@ describe('ReminderService', () => {
     });
 
     it('Межа 6 днів: лист НЕ надсилається', async () => {
-      // 1 березня + 6 днів = 7 березня
       vi.setSystemTime(new Date('2026-03-07T10:00:00.000Z'));
 
       const result = await service.checkAndSendReminder('ORDER-100');
 
       expect(result).toBe(false);
       expect(mailer.send).not.toHaveBeenCalled();
-      expect(reminderRepo.count).toBe(0); // стан не змінився
+      expect(reminderRepo.count).toBe(0);
     });
 
-    it('Межа 7 днів (рівно 7 діб): лист НЕ надсилається (умова: понад 7 днів)', async () => {
-      // 1 березня + 7 днів = 8 березня
+    it('Межа 7 днів: лист НЕ надсилається (умова: понад 7 днів)', async () => {
       vi.setSystemTime(new Date('2026-03-08T10:00:00.000Z'));
 
       const result = await service.checkAndSendReminder('ORDER-100');
@@ -59,22 +56,17 @@ describe('ReminderService', () => {
     });
 
     it('Межа 8 днів: лист надсилається і фіксується стан', async () => {
-      // 1 березня + 8 днів = 9 березня
       vi.setSystemTime(new Date('2026-03-09T10:00:00.000Z'));
 
       const result = await service.checkAndSendReminder('ORDER-100');
 
       expect(result).toBe(true);
-
-      // Перевірка взаємодії (interaction check)
       expect(mailer.send).toHaveBeenCalledTimes(1);
       expect(mailer.send).toHaveBeenCalledWith(
         'user@example.com',
         'Нагадування про замовлення',
         expect.stringContaining('ORDER-100'),
       );
-
-      // Перевірка стану через підробку (state check)
       expect(reminderRepo.count).toBe(1);
       expect(await reminderRepo.isReminderSent('ORDER-100')).toBe(true);
       expect(reminderRepo.getSentDate('ORDER-100')).toBe('2026-03-09T10:00:00.000Z');
@@ -82,7 +74,6 @@ describe('ReminderService', () => {
 
     it('не надсилає лист повторно, якщо нагадування вже було збережене в сховищі', async () => {
       vi.setSystemTime(new Date('2026-03-09T10:00:00.000Z'));
-      // Заздалегідь записуємо стан у підробку
       await reminderRepo.saveSentReminder('ORDER-100', '2026-03-09T08:00:00.000Z');
 
       const result = await service.checkAndSendReminder('ORDER-100');
@@ -92,26 +83,43 @@ describe('ReminderService', () => {
     });
   });
 
-  describe('Сценарії відмови залежностей', () => {
+  describe('Сценарії відмови залежностей та некоректних даних', () => {
+    it('викидає помилку, якщо дата замовлення невалідна (покриття рядка 32)', async () => {
+      orderProvider.getOrder = vi.fn().mockResolvedValue({
+        id: 'ORDER-BAD-DATE',
+        email: 'user@example.com',
+        createdAt: 'not-a-valid-date',
+      });
+
+      await expect(
+        service.checkAndSendReminder('ORDER-BAD-DATE'),
+      ).rejects.toThrow('INVALID_ORDER_DATE');
+
+      expect(mailer.send).not.toHaveBeenCalled();
+      expect(reminderRepo.count).toBe(0);
+    });
+
     it('Сценарій збою 1: сервіс замовлень недоступний', async () => {
       orderProvider.getOrder = vi.fn().mockRejectedValue(new Error('ORDER_SERVICE_DOWN'));
 
-      await expect(service.checkAndSendReminder('ORDER-100')).rejects.toThrow('ORDER_SERVICE_DOWN');
+      await expect(
+        service.checkAndSendReminder('ORDER-100'),
+      ).rejects.toThrow('ORDER_SERVICE_DOWN');
 
-      // Переконуємося, що побічні дії не виконались
       expect(mailer.send).not.toHaveBeenCalled();
       expect(reminderRepo.count).toBe(0);
     });
 
     it('Сценарій збою 2: поштовий сервіс впав — стан у репозиторії не зберігається', async () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-09T10:00:00.000Z')); // 8 днів
+      vi.setSystemTime(new Date('2026-03-09T10:00:00.000Z'));
 
       mailer.send = vi.fn().mockRejectedValue(new Error('SMTP_CONNECTION_REFUSED'));
 
-      await expect(service.checkAndSendReminder('ORDER-100')).rejects.toThrow('SMTP_CONNECTION_REFUSED');
+      await expect(
+        service.checkAndSendReminder('ORDER-100'),
+      ).rejects.toThrow('SMTP_CONNECTION_REFUSED');
 
-      // Перевірка стану: статус не повинен позначитися як відправлений, якщо лист не пішов
       expect(reminderRepo.count).toBe(0);
       expect(await reminderRepo.isReminderSent('ORDER-100')).toBe(false);
 
