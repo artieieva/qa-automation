@@ -21,21 +21,30 @@ describe('calcSickLeave - TDD', () => {
     { days: 0, expected: 0 },
     { days: 1, expected: 600 },
     { days: 5, expected: 3000 },
-  ])('розраховує 60% за перші 5 днів: $days дн. -> $expected грн', ({ days, expected }) => {
-    expect(calcSickLeave(days, 1000)).toBe(expected);
-  });
+  ])(
+    'розраховує 60% за перші 5 днів: $days дн. -> $expected грн',
+    ({ days, expected }) => {
+      expect(calcSickLeave(days, 1000)).toBe(expected);
+    },
+  );
   it.each([
     { days: 6, expected: 3800 },
     { days: 10, expected: 7000 },
-  ])('розраховує 80% за дні з 6 по 10: $days дн. -> $expected грн', ({ days, expected }) => {
-    expect(calcSickLeave(days, 1000)).toBe(expected);
-  });
+  ])(
+    'розраховує 80% за дні з 6 по 10: $days дн. -> $expected грн',
+    ({ days, expected }) => {
+      expect(calcSickLeave(days, 1000)).toBe(expected);
+    },
+  );
   it.each([
     { days: 11, expected: 8000 },
     { days: 30, expected: 27000 },
-  ])('розраховує 100% за дні з 11 по 30: $days дн. -> $expected грн', ({ days, expected }) => {
-    expect(calcSickLeave(days, 1000)).toBe(expected);
-  });
+  ])(
+    'розраховує 100% за дні з 11 по 30: $days дн. -> $expected грн',
+    ({ days, expected }) => {
+      expect(calcSickLeave(days, 1000)).toBe(expected);
+    },
+  );
   it('заокруглює підсумкову суму виплати до 2 знаків після коми', () => {
     // 3 дні * 333.33 грн/день * 0.6 = 599.994 грн -> має бути 599.99 грн
     expect(calcSickLeave(3, 333.33)).toBe(599.99);

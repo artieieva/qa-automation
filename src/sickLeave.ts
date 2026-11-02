@@ -28,7 +28,10 @@ export function calcSickLeave(days: number, dailySalary: number): number {
   if (days === 0) return 0;
 
   const stage1Days = Math.min(days, STAGE1_MAX_DAYS);
-  const stage2Days = Math.min(Math.max(0, days - STAGE1_MAX_DAYS), STAGE2_MAX_DAYS - STAGE1_MAX_DAYS);
+  const stage2Days = Math.min(
+    Math.max(0, days - STAGE1_MAX_DAYS),
+    STAGE2_MAX_DAYS - STAGE1_MAX_DAYS,
+  );
   const stage3Days = Math.max(0, days - STAGE2_MAX_DAYS);
 
   const totalPay =
